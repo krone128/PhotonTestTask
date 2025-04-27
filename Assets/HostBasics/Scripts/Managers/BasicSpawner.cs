@@ -24,12 +24,12 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (_runner == null)
         {
-            if (GUI.Button(new Rect(0, 0, 200, 40), "Host"))
+            if (GUI.Button(new Rect(0, 0, 300, 60), "Host"))
             {
                 StartGame(GameMode.Host);
             }
 
-            if (GUI.Button(new Rect(0, 40, 200, 40), "Join"))
+            if (GUI.Button(new Rect(0, 80, 300, 60), "Join"))
             {
                 StartGame(GameMode.Client);
             }
@@ -92,7 +92,6 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             if (player.PlayerId > 1)
             {
                 gameManager.PlayerJoined(player, networkPlayerObject.transform);
-                enableNetworkUpdate = true;
             }
         }
     }
@@ -204,38 +203,6 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
-    }
-
-    private float rt = 0;
-    private float updateStep = 3;
-    private float currStep = 0;
-    
-    public bool enableNetworkUpdate = false;
-
-    [UsedImplicitly]
-    public void LateUpdate()
-    {
-        if(!enableNetworkUpdate) return;
-        
-        if(!_runner || !_runner.IsServer)
-        {
-            return;
-        }
-        
-        ++currStep;
-        if (currStep < updateStep)
-        {
-            return;
-        }
-
-        currStep = 0;
-        
-        rt = Time.realtimeSinceStartup - rt;
-        
-        var playerPositions = _spawnedCharacters.Where(kvp => kvp.Key != _runner.LocalPlayer).Select(kvp => kvp.Value.gameObject.transform.position).ToArray();
-
-        if (playerPositions.Length == 0) return;
-        gameManager.SendEntityUpdateToClients();
     }
     
     public void SendReliableDataToPlayer(IDictionary<PlayerRef, List<IEntity>> mappedEntities)

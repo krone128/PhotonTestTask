@@ -28,7 +28,7 @@ namespace HostBasics.Scripts
             _entityManager.Init();
             
             if(!runnerIsServer) return;
-            
+            NetworkUpdateProxy.OnFixedUpdateNetwork += OnFixedUpdateNetwork;
             _entityManager.SpawnRandomBatched(GameConfig.EntityCount, GameConfig.GridSize);
             SetupInterestManagement();
         }
@@ -43,22 +43,14 @@ namespace HostBasics.Scripts
             }
         }
         
-        private bool _updateLock = false;
-        
         public void SendEntityUpdateToClients()
         {
-            // if (_updateLock) return;
-            
-            _updateLock = true;
-            
             var entities = _interestManager.GetUpdatedEntities();
 
             if (entities.Count > 0)
             {
                 _basicSpawner.SendReliableDataToPlayer(entities);
             }
-
-            _updateLock = false;
         }
 
         public void JoinSession()
@@ -89,16 +81,18 @@ namespace HostBasics.Scripts
         {
             var halfChunkSize = GameConfig.ChunkSize / 2f;
             
+            var root = new GameObject();
+            
             for (int i = 0; i < GameConfig.GridChunks.x; i++)
             {
                 for (int j = 0; j < GameConfig.GridChunks.y; j++)
                 {
-                    TileIndicators[i, j] = Instantiate(_debugTile,
+                    var tile = Instantiate(_debugTile,
                         new Vector3(i * GameConfig.ChunkSize + halfChunkSize, 
                             -1,
-                            j * GameConfig.ChunkSize + halfChunkSize), Quaternion.identity);
-                    
-                    TileIndicators[i, j].transform.localScale = new Vector3(GameConfig.ChunkSize, 0.05f, GameConfig.ChunkSize) * 0.95f;
+                            j * GameConfig.ChunkSize + halfChunkSize), Quaternion.identity, root.transform);
+                    tile.transform.localScale = new Vector3(GameConfig.ChunkSize, 0.05f, GameConfig.ChunkSize) * 0.96f;
+                    TileIndicators[i, j] = tile; 
                 }
             }
         }
@@ -115,6 +109,11 @@ namespace HostBasics.Scripts
                         InterestManager.IsInRadiusChunks(playerTransform.position, new Vector2Int(i, j), GameConfig.InterestRadius));
                 }
             }
+        }
+
+        private void OnFixedUpdateNetwork()
+        {
+            SendEntityUpdateToClients();
         }
 
         public void PlayerJoined(PlayerRef player, Transform transform1)

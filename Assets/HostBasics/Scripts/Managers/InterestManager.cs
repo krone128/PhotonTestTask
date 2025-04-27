@@ -114,12 +114,12 @@ namespace HostBasics.Scripts
             }
         }
 
-        private void UpdateEntityChunks()
+        private void CheckEntityChangedChunks()
         {
             foreach (var entity in _entitiesList)
             {
                 var chunk = GetChunk(entity.Position);
-                entity.ResetChunkDirty();
+
                 if (_entityToChunkMapping.TryGetValue(entity.Id, out var mappedChunk))
                 {
                     if (mappedChunk == chunk) continue;
@@ -136,7 +136,7 @@ namespace HostBasics.Scripts
         public IDictionary<PlayerRef, List<IEntity>> GetUpdatedEntities()
         {
             UpdatePlayerChunks();
-            UpdateEntityChunks();
+            CheckEntityChangedChunks();
             
             foreach (var precacheValue in _precache.Values)
             {
@@ -152,13 +152,12 @@ namespace HostBasics.Scripts
                 foreach (var p in _playerMap)
                 {
                     var playerChunk = _playerToChunkMapping[p.Key];
-
                     var pcList = _precache[p.Key];
-
+                    var dirtyChunksMap = _playerToDirtyChunkMapping[p.Key];
                     var entityInRadius = IsInRadiusChunks(entityChunk, playerChunk, GameConfig.InterestRadius);
                     var lastEntityInRadius = IsInRadiusChunks(lastEntityChunk, playerChunk, GameConfig.InterestRadius);
                     
-                    if (_playerToDirtyChunkMapping[p.Key].Contains(entityChunk)
+                    if (dirtyChunksMap.Contains(entityChunk)
                         || (entityInRadius && 
                             (e.IsDirty 
                              || (e.IsChunkDirty && !lastEntityInRadius))))

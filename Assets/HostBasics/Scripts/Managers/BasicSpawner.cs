@@ -1,19 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Runtime.InteropServices;
-using System.Text;
 using Fusion;
 using Fusion.Addons.Physics;
 using Fusion.Sockets;
 using HostBasics.Scripts;
-using HostBasics.Scripts.Entities;
-using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using CompressionLevel = UnityEngine.CompressionLevel;
 
 
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
@@ -21,8 +13,6 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     private NetworkRunner _runner;
     
     public GameManager gameManager;
-
-    private ReliableKey EntityUpdateEvent = ReliableKey.FromInts(0,0,0,777);
     
     private void OnGUI()
     {
@@ -60,6 +50,8 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             sceneInfo.AddSceneRef(scene, LoadSceneMode.Additive);
         }
         
+        gameManager.Init(_runner);
+        
         // Start or join (depends on gamemode) a session with a specific name
         await _runner.StartGame(new StartGameArgs()
         {
@@ -68,8 +60,11 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             Scene = scene,
             SceneManager = gameObject.AddComponent<NetworkSceneManagerDefault>()
         });
-
-        gameManager.InitializeEntities(this, _runner.IsServer);
+        
+        if (mode == GameMode.Host)
+        {
+            gameManager.SetupWorld();
+        }
     }
 
     private void OnPlayerSpawned(Player player)
@@ -187,8 +182,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)
     {
-        if(key.Equals(EntityUpdateEvent))
-            gameManager.ProcessReliableData(data);
+
     }
 
     public void OnReliableDataProgress(NetworkRunner runner, PlayerRef player, ReliableKey key, float progress)
@@ -209,32 +203,5 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
-    }
-    
-    StringBuilder sb = new StringBuilder();
-    
-    public void SendReliableDataToPlayer(IDictionary<PlayerRef, List<IEntity>> mappedEntities)
-    {
-        sb.Clear();
-        
-        foreach (var playerRef in _spawnedCharacters)
-        {
-            if(playerRef.Key.IsMasterClient) continue;
-
-            if(!mappedEntities.ContainsKey(playerRef.Key)) continue;
-            
-            var filteredMapping = mappedEntities[playerRef.Key]
-                .Select(e => new EntityUpdateMessage(e.Id, e.Position, e.Destination)).ToArray();
-            
-            if(filteredMapping.Length == 0) continue;
-            
-            var bytes = MemoryMarshal.Cast<EntityUpdateMessage, byte>(filteredMapping.ToArray());
-            
-            sb.Append($"Sending to player [{playerRef.Key.PlayerId}]:\n{filteredMapping.Length} entities, {bytes.Length} bytes");
-            
-            _runner.SendReliableDataToPlayer(playerRef.Key, EntityUpdateEvent, bytes.ToArray());
-        }
-        
-        if(sb.Length > 0) Debug.Log(sb.ToString());
     }
 }

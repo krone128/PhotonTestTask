@@ -1,4 +1,5 @@
 using System;
+using TMPro;
 using UnityEngine;
 
 namespace HostBasics.Scripts.Entities
@@ -12,6 +13,19 @@ namespace HostBasics.Scripts.Entities
 
         public float Speed = 10f;
 
+        
+        public short Id
+        {
+            get => _id;
+            private set
+            {
+                _id = value;
+                gameObject.name = $"Entity {Id}";
+            }
+        }
+
+        public bool Authoritative { get; private set; }
+        public bool IsDirty { get; private set; }
         public bool IsChunkDirty { get; private set; }
 
         public Vector3 Position
@@ -55,18 +69,9 @@ namespace HostBasics.Scripts.Entities
             IsChunkDirty = true;
         }
 
-        public short Id
+        private void OnMouseUpAsButton()
         {
-            get => _id;
-            private set
-            {
-                _id = value;
-                gameObject.name = $"Entity {Id}";
-            }
+            GameObject.Find("DebugText").GetComponent<TMP_Text>().text = $"Entity {_id}";
         }
-
-        public bool Authoritative { get; private set; }
-
-        public bool IsDirty { get; private set; }
     }
 }

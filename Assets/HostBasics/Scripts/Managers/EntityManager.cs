@@ -96,14 +96,13 @@ namespace HostBasics.Scripts
                 if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius)) continue;
                 
                 PoolEntity((Entity)e);
-
-                _entities.Remove(e.Id);
             }
         }
         
-        public void PoolEntity(Entity entityView)
+        private void PoolEntity(Entity entityView)
         {
             entityView.gameObject.SetActive(false);
+            _entities.Remove(entityView.Id);
             _creaturePool.Release(entityView);
         }
 

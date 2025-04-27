@@ -26,14 +26,16 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     
     private void OnGUI()
     {
+        var buttonSize = new Vector2(600, 250);
+        
         if (_runner == null)
         {
-            if (GUI.Button(new Rect(0, 0, 300, 60), "Host"))
+            if (GUI.Button(new Rect((Screen.width - buttonSize.x) / 2f,  (Screen.height - buttonSize.y) / 2f, buttonSize.x, buttonSize.y), "Host"))
             {
                 StartGame(GameMode.Host);
             }
 
-            if (GUI.Button(new Rect(0, 80, 300, 60), "Join"))
+            if (GUI.Button(new Rect((Screen.width - buttonSize.x) / 2f, (Screen.height + buttonSize.y) / 2f, buttonSize.x, buttonSize.y), "Join"))
             {
                 StartGame(GameMode.Client);
             }
@@ -88,7 +90,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
         if (runner.IsServer)
         {
             // Create a unique position for the player
-            Vector3 spawnPosition = new Vector3((player.RawEncoded % runner.Config.Simulation.PlayerCount) * 3 + GameConfig.GridSize.x / 2f + GameConfig.ChunkSize / 2f, 1, GameConfig.GridSize.y / 2f + GameConfig.ChunkSize / 2f);
+            Vector3 spawnPosition = new Vector3(GameConfig.GridSize.x / 2f + GameConfig.ChunkSize / 2f, 1, GameConfig.GridSize.y / 2f + GameConfig.ChunkSize / 2f);
             NetworkObject networkPlayerObject = runner.Spawn(_playerPrefab, spawnPosition, Quaternion.identity, player);
             // Keep track of the player avatars for easy access
             _spawnedCharacters.Add(player, networkPlayerObject);

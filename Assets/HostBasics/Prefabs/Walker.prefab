@@ -98,6 +98,7 @@ GameObject:
   - component: {fileID: 4405111191058227423}
   - component: {fileID: 936489243151805675}
   - component: {fileID: 1137634405320389455}
+  - component: {fileID: 5178979181652961509}
   m_Layer: 0
   m_Name: Walker
   m_TagString: Untagged
@@ -115,7 +116,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2105336238123341820}
@@ -190,3 +191,24 @@ MonoBehaviour:
   meshRenderer: {fileID: 936489243151805675}
   RedMaterial: {fileID: 2100000, guid: abbefa9a117be474da2622d9f3bd24f6, type: 2}
   GreenMaterial: {fileID: 2100000, guid: 50fdbd6dec24347c1b854e9670a4cf88, type: 2}
+--- !u!65 &5178979181652961509
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6355367591041887719}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 2, y: 2, z: 2}
+  m_Center: {x: 0, y: 0, z: 0}

@@ -1,14 +1,10 @@
-using System;
 using UnityEngine;
 
 namespace HostBasics.Scripts.Entities
 {
     public interface IEntity
     {
-        public event Action<IEntity, Vector3> OnDestinationUpdated;
-        
         public short Id { get; }
-        public bool Authoritative { get; }
         public bool IsDirty { get; }
         public bool IsChunkDirty { get; }
         
@@ -17,7 +13,6 @@ namespace HostBasics.Scripts.Entities
 
         void Init();
         void Init(short id);
-        void SelectNewDestination();
         void StartMovement();
         void ResetDirty();
         void SetDirty();

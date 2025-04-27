@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using Fusion;
 using HostBasics.Scripts.Entities;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -12,7 +13,7 @@ namespace HostBasics.Scripts
     public class GameManager : MonoBehaviour
     {
         [SerializeField] private EntityManager _entityManager;
-        private IInterestManager _interestManager;
+        private InterestManager _interestManager;
         
         BasicSpawner _basicSpawner;
         public Transform playerTransform;
@@ -66,17 +67,15 @@ namespace HostBasics.Scripts
         public void ProcessReliableData(ArraySegment<byte> data)
         {
             var span = MemoryMarshal.Cast<byte, EntityUpdateMessage>(data);
-            
-            if(playerTransform) _entityManager.UpdateNotInterested(playerTransform.position);
-            
-            var playerChunk = InterestManager.GetChunk(playerTransform.position);
+
+            if (playerTransform)
+            {
+                _entityManager.UpdateNotInterested(playerTransform.position);
+            }
             
             foreach (var e in span)
             {
-                //if (InterestManager.IsInRadiusChunks(e.Position, playerChunk, GameConfig.InterestRadius))
-                {
-                    _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);
-                }
+                _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);
             }
         }
         
@@ -99,7 +98,8 @@ namespace HostBasics.Scripts
                             -1,
                             j * GameConfig.ChunkSize + halfChunkSize), Quaternion.identity, root.transform);
                     tile.transform.localScale = new Vector3(GameConfig.ChunkSize, 0.05f, GameConfig.ChunkSize) * 0.96f;
-                    TileIndicators[i, j] = tile; 
+                    TileIndicators[i, j] = tile;
+                    tile.GetComponentInChildren<TMP_Text>().text = $"{i} . {j}";
                 }
             }
         }

@@ -152,7 +152,6 @@ MonoBehaviour:
   gameManager: {fileID: 1150555950}
   _playerPrefab:
     RawGuidValue: 8e17d0b59f9e14f9f9b745687d23f746
-  enableNetworkUpdate: 0
 --- !u!4 &165585585
 Transform:
   m_ObjectHideFlags: 0
@@ -399,7 +398,7 @@ GameObject:
   - component: {fileID: 837799398}
   - component: {fileID: 837799397}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: DebugText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

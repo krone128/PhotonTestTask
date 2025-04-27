@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace HostBasics.Scripts
 {
-    public class InterestManager : IInterestManager
+    public class InterestManager
     {
         List<IEntity> _entitiesList = new ();
         
@@ -42,15 +42,11 @@ namespace HostBasics.Scripts
         {
             _entitiesList.Remove(entity);
         }
-
-        public static Vector2Int GetChunk(Vector3 position)
-        {
-            return new Vector2Int((int)(position.x / GameConfig.ChunkSize), (int)(position.z / GameConfig.ChunkSize));
-        }
+        
         
         Dictionary<PlayerRef, HashSet<Vector2Int>> _playerToDirtyChunkMapping = new();
         
-        public void UpdatePlayerChunks()
+        private void UpdatePlayerChunks()
         {
             foreach (var playerKvp in _playerMap)
             {
@@ -118,7 +114,7 @@ namespace HostBasics.Scripts
             }
         }
 
-        public void UpdateEntityChunks()
+        private void UpdateEntityChunks()
         {
             foreach (var entity in _entitiesList)
             {
@@ -163,8 +159,9 @@ namespace HostBasics.Scripts
                     var lastEntityInRadius = IsInRadiusChunks(lastEntityChunk, playerChunk, GameConfig.InterestRadius);
                     
                     if (_playerToDirtyChunkMapping[p.Key].Contains(entityChunk)
-                        || entityInRadius && 
-                            (e.IsDirty || (e.IsChunkDirty && !lastEntityInRadius)))
+                        || (entityInRadius && 
+                            (e.IsDirty 
+                             || (e.IsChunkDirty && !lastEntityInRadius))))
                     {
                         pcList.Add(e);
                     }
@@ -176,6 +173,11 @@ namespace HostBasics.Scripts
 
             return _precache;
         }
+        
+        public static Vector2Int GetChunk(Vector3 position)
+        {
+            return new Vector2Int((int)(position.x / GameConfig.ChunkSize), (int)(position.z / GameConfig.ChunkSize));
+        }
 
         public static bool IsInRadiusChunks(Vector3 position, Vector2Int chunk, int blockRadius)
         {
@@ -184,7 +186,7 @@ namespace HostBasics.Scripts
             return Mathf.Abs(chunkDelta.x) <= blockRadius && Mathf.Abs(chunkDelta.y) <= blockRadius;
         }
 
-        public static bool IsInRadiusChunks(Vector2Int position, Vector2Int chunk, int blockRadius)
+        private static bool IsInRadiusChunks(Vector2Int position, Vector2Int chunk, int blockRadius)
         {
             var chunkDelta = position - chunk;
                     

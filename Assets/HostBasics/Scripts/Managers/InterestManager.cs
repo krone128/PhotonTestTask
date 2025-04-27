@@ -163,17 +163,15 @@ namespace HostBasics.Scripts
                     var lastEntityInRadius = IsInRadiusChunks(lastEntityChunk, playerChunk, GameConfig.InterestRadius);
                     
                     if (_playerToDirtyChunkMapping[p.Key].Contains(entityChunk)
-                        || (e.IsDirty && entityInRadius)
-                        || (e.IsChunkDirty && entityInRadius && !lastEntityInRadius))
+                        || entityInRadius && 
+                            (e.IsDirty || (e.IsChunkDirty && !lastEntityInRadius)))
                     {
                         pcList.Add(e);
-                    
-                        e.ResetDirty();
-                        e.ResetChunkDirty();
-                    
-                        break;
                     }
                 }
+                
+                e.ResetDirty();
+                e.ResetChunkDirty();
             }
 
             return _precache;

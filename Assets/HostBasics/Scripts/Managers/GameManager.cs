@@ -69,8 +69,15 @@ namespace HostBasics.Scripts
             
             if(playerTransform) _entityManager.UpdateNotInterested(playerTransform.position);
             
+            var playerChunk = InterestManager.GetChunk(playerTransform.position);
+            
             foreach (var e in span)
-                _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);
+            {
+                //if (InterestManager.IsInRadiusChunks(e.Position, playerChunk, GameConfig.InterestRadius))
+                {
+                    _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);
+                }
+            }
         }
         
         GameObject[,] TileIndicators = new GameObject[GameConfig.GridChunks.x, GameConfig.GridChunks.y];

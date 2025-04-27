@@ -7,7 +7,7 @@ namespace HostBasics.Scripts.Entities
     {
         public event Action<IEntity, Vector3> OnDestinationUpdated;
         
-        public int Id { get; }
+        public short Id { get; }
         public bool Authoritative { get; }
         public bool IsDirty { get; }
         public bool IsChunkDirty { get; }
@@ -16,7 +16,7 @@ namespace HostBasics.Scripts.Entities
         public Vector3 Destination { get; set; }
 
         void Init();
-        void Init(int id);
+        void Init(short id);
         void SelectNewDestination();
         void StartMovement();
         void ResetDirty();

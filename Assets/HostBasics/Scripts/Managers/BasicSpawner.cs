@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
 using Fusion;
 using Fusion.Addons.Physics;
 using Fusion.Sockets;
@@ -10,6 +13,7 @@ using HostBasics.Scripts.Entities;
 using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using CompressionLevel = UnityEngine.CompressionLevel;
 
 
 public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
@@ -205,8 +209,12 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
     }
     
+    StringBuilder sb = new StringBuilder();
+    
     public void SendReliableDataToPlayer(IDictionary<PlayerRef, List<IEntity>> mappedEntities)
     {
+        sb.Clear();
+        
         foreach (var playerRef in _spawnedCharacters)
         {
             if(playerRef.Key.IsMasterClient) continue;
@@ -220,7 +228,11 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             
             var bytes = MemoryMarshal.Cast<EntityUpdateMessage, byte>(filteredMapping.ToArray());
             
+            sb.Append($"Sending to player [{playerRef.Key.PlayerId}]:\n{filteredMapping.Length} entities, {bytes.Length} bytes");
+            
             _runner.SendReliableDataToPlayer(playerRef.Key, EntityUpdateEvent, bytes.ToArray());
         }
+        
+        if(sb.Length > 0) Debug.Log(sb.ToString());
     }
 }

@@ -1,18 +1,41 @@
+using System;
 using UnityEngine;
 
 namespace HostBasics.Scripts.Entities
 {
     public struct EntityUpdateMessage
     {
-        public int Id;
-        public Vector3 Position;
-        public Vector3 Destination;
+        public short Id;
+        public Vector2Half Position;
+        public Vector2Half Destination;
 
-        public EntityUpdateMessage(int id, Vector3 position, Vector3 destination)
+        public EntityUpdateMessage(short id, Vector3 position, Vector3 destination)
         {
             Id = id;
             Position = position;
             Destination = destination;
+        }
+    }
+
+    public struct Vector2Half
+    {
+        public Half x;
+        public Half y;
+
+        private Vector2Half(Half x, Half y)
+        {
+            this.x = x;
+            this.y = y;
+        }
+
+        public static implicit operator Vector2Half(Vector3 value)
+        {
+            return new Vector2Half(new Half(value.x), new Half(value.z));
+        }
+
+        public static implicit operator Vector3(Vector2Half value)
+        {
+            return new Vector3(value.x, 0, value.y);
         }
     }
 }

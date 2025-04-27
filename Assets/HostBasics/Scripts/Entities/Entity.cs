@@ -7,8 +7,8 @@ namespace HostBasics.Scripts.Entities
     {
         public event Action<IEntity, Vector3> OnDestinationUpdated;
         
-        private static int ENTITY_ID_POOL = 0;
-        private int _id;
+        private static short ENTITY_ID_POOL = 0;
+        private short _id;
 
         public float Speed = 10f;
 
@@ -28,7 +28,7 @@ namespace HostBasics.Scripts.Entities
             SetDirty();
         }
 
-        public void Init(int id)
+        public void Init(short id)
         {
             Id = id;
             Authoritative = false;
@@ -55,7 +55,7 @@ namespace HostBasics.Scripts.Entities
             IsChunkDirty = true;
         }
 
-        public int Id
+        public short Id
         {
             get => _id;
             private set

@@ -70,7 +70,7 @@ namespace HostBasics.Scripts
             }
         }
 
-        public void UpdateEntityClient(int id, Vector3 position, Vector3 destination)
+        public void UpdateEntityClient(short id, Vector3 position, Vector3 destination)
         {
             if (!_entities.TryGetValue(id, out var entity))
             {

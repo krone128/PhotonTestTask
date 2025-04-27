@@ -7,7 +7,7 @@ public class CameraFollow : MonoBehaviour
     [SerializeField] private Vector3 _offset;
 
     // Update is called once per frame
-    void Update()
+    void LateUpdate()
     {
         if(!playerTransform) return;
         

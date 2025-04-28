@@ -13,8 +13,7 @@ namespace HostBasics.Scripts
 {
     public class GameManager : MonoBehaviour, INetworkRunnerCallbacks
     {
-        private Dictionary<PlayerRef, (long, long)> TotalMsgBytesSent = new Dictionary<PlayerRef, (long, long)>();
-
+        private Dictionary<PlayerRef, (long, long)> TotalMsgBytesSent = new();
         private (long, long) TotalMsgBytesReceived = (0, 0);
         
         [SerializeField] private EntityManager _entityManager;
@@ -32,7 +31,7 @@ namespace HostBasics.Scripts
         public void Init(NetworkRunner runner)
         {
             _networkRunner = runner;
-            _entityManager.Init();
+            _entityManager.Init(runner);
             _networkRunner.AddCallbacks(this);
         }
         
@@ -260,7 +259,8 @@ namespace HostBasics.Scripts
 
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
         {
-            
+            _entityManager.Clear();
+            NetworkUpdateProxy.OnFixedUpdateNetwork -= OnFixedUpdateNetwork;
         }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)

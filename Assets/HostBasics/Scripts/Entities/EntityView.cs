@@ -25,9 +25,7 @@ namespace HostBasics.Scripts.Entities
         }
 
         Vector3 TargetDirection { get; set; }
-    
-        public bool IsActive => gameObject.activeSelf;
-    
+
         public void StartMovement()
         {
             TargetDirection = Destination - transform.position;
@@ -62,22 +60,15 @@ namespace HostBasics.Scripts.Entities
         public void SelectNewDestination()
         {
             if(!Authoritative) return;
-            
-            var destination = 
-                new Vector3(Random.Range(-GameConfig.GridSize.x, GameConfig.GridSize.x), 
-                0f, 
-                Random.Range(-GameConfig.GridSize.y, GameConfig.GridSize.y))
-                / 5 + Position;
 
-            destination = new Vector3(Mathf.Clamp(destination.x, 0, GameConfig.GridSize.x), 
-                0,
-                Mathf.Clamp(destination.z, 0, GameConfig.GridSize.y));
+            var destination =
+                new Vector3(Random.Range(0, GameConfig.GridSize.x),
+                    0f,
+                    Random.Range(0, GameConfig.GridSize.y));
             
             Destination = destination;
             StartMovement();
             IsDirty = true;
-            OnDestinationUpdated?.Invoke(this, Destination);
-            
         }
 
         private void OnDrawGizmos()

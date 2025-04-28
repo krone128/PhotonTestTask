@@ -10,13 +10,17 @@ namespace HostBasics.Scripts.Entities
         
         public Vector3 Position { get; set;}
         public Vector3 Destination { get; set; }
+        
+        public int LastUpdateTick { get; set; }
 
         void Init();
         void Init(short id);
         void StartMovement();
-        void ResetDirty();
+        
         void SetDirty();
-        void ResetChunkDirty();
+        void ResetDirty();
+        
         void SetChunkDirty();
+        void ResetChunkDirty();
     }
 }

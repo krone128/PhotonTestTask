@@ -16,7 +16,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     
     private void OnGUI()
     {
-        var buttonSize = new Vector2(600, 250);
+        var buttonSize = new Vector2(400, 200);
         
         if (_runner == null)
         {
@@ -30,19 +30,33 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
                 StartGame(GameMode.Client);
             }
         }
+        else if(_runner.IsRunning)
+        {
+            if (GUI.Button(new Rect(0, 0, buttonSize.x,  buttonSize.y), "Leave"))
+            {
+                EndGame();
+            }
+        }
+    }
+
+    private async void EndGame()
+    {
+        await _runner.Shutdown();
+        _runner.RemoveCallbacks(this);
+        _runner = null;
     }
 
     async void StartGame(GameMode mode)
     {
         Player.OnPlayerSpawned += OnPlayerSpawned;
         
+        _spawnedCharacters.Clear();
+        
         // Create the Fusion runner and let it know that we will be providing user input
-        _runner = gameObject.AddComponent<NetworkRunner>();
+        _runner = new GameObject("Runner").AddComponent<NetworkRunner>();
         _runner.ProvideInput = true;
-
-        var runnerSimulatePhysics3D = gameObject.AddComponent<RunnerSimulatePhysics3D>();
-        runnerSimulatePhysics3D.ClientPhysicsSimulation = ClientPhysicsSimulation.SimulateAlways;
-
+        _runner.AddCallbacks(this);
+        
         // Create the NetworkSceneInfo from the current scene
         var scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex);
         var sceneInfo = new NetworkSceneInfo();
@@ -71,6 +85,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
     {
         if (player.Object.HasInputAuthority)
         {
+            Player.OnPlayerSpawned -= OnPlayerSpawned;
             gameManager.playerTransform = player.transform;
             Camera.main.GetComponent<CameraFollow>().playerTransform = player.transform;
         }
@@ -131,12 +146,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
         if (Input.GetKey(KeyCode.D))
             data.direction += Vector3.right;
-        
-        data.buttons.Set(NetworkInputData.MOUSEBUTTON0, _mouseButton0);
-        _mouseButton0 = false;
-        data.buttons.Set(NetworkInputData.MOUSEBUTTON1, _mouseButton1);
-        _mouseButton1 = false;
-        
+
         input.Set(data);
     }
 

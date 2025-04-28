@@ -1,4 +1,3 @@
-using System;
 using TMPro;
 using UnityEngine;
 
@@ -6,13 +5,11 @@ namespace HostBasics.Scripts.Entities
 {
     public partial class Entity : IEntity
     {
-        public event Action<IEntity, Vector3> OnDestinationUpdated;
-        
         private static short ENTITY_ID_POOL = 0;
-        private short _id;
-
+        
         public float Speed = 10f;
-
+        
+        private short _id;
         
         public short Id
         {
@@ -24,7 +21,7 @@ namespace HostBasics.Scripts.Entities
             }
         }
 
-        public bool Authoritative { get; private set; }
+        private bool Authoritative { get; set; }
         public bool IsDirty { get; private set; }
         public bool IsChunkDirty { get; private set; }
 
@@ -34,6 +31,7 @@ namespace HostBasics.Scripts.Entities
             set => transform.position = value;
         }
         public Vector3 Destination { get; set; }
+        public int LastUpdateTick { get; set; }
 
         public void Init()
         {
@@ -48,26 +46,12 @@ namespace HostBasics.Scripts.Entities
             Authoritative = false;
             SetDirty();
         }
-
-        public void ResetDirty()
-        {
-            IsDirty = false;
-        }
-
-        public void SetDirty()
-        {
-            IsDirty = true;
-        }
-
-        public void ResetChunkDirty()
-        {
-            IsChunkDirty = false;
-        }
-
-        public void SetChunkDirty()
-        {
-            IsChunkDirty = true;
-        }
+        
+        public void SetDirty() => IsDirty = true;
+        public void ResetDirty() => IsDirty = false;
+        
+        public void SetChunkDirty() => IsChunkDirty = true;
+        public void ResetChunkDirty() => IsChunkDirty = false;
 
         private void OnMouseUpAsButton()
         {

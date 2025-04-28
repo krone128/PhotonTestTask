@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Fusion;
 using HostBasics.Scripts.Entities;
 using UnityEngine;
 using UnityEngine.Pool;
@@ -16,12 +17,14 @@ namespace HostBasics.Scripts
 
         private IObjectPool<Entity> _creaturePool;
         
-        private Dictionary<int, IEntity> _entities  = new();
+        private Dictionary<int, Entity> _entities  = new();
+        private NetworkRunner _runner;
 
         public IEnumerable<IEntity> Entities => _entities.Values;
 
-        public void Init()
+        public void Init(NetworkRunner runner)
         {
+            _runner = runner;
             _creaturePool = new ObjectPool<Entity>(() => Instantiate(_entityPrefab, _entityParent), ActionOnGet, ActionOnRelease);
         }
 
@@ -79,11 +82,12 @@ namespace HostBasics.Scripts
                 _entities.Add(id, entity);
             }
             
+            entity.LastUpdateTick = _runner.Tick.Raw;
+            
             entity.Position = position;
             entity.Destination = destination;
             entity.StartMovement();
         }
-        
         // Handle entities moving out of interest zone on client
         public void UpdateNotInterested(Vector3 position)
         {
@@ -93,9 +97,9 @@ namespace HostBasics.Scripts
             
             foreach (var e in entities)
             {
-                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius)) continue;
-                
-                PoolEntity((Entity)e);
+                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius) || (_runner.Tick.Raw - e.LastUpdateTick < 5)) continue;
+
+                PoolEntity(e);
             }
         }
         
@@ -111,6 +115,14 @@ namespace HostBasics.Scripts
         {
             var entity = _creaturePool.Get();
             return entity;
+        }
+
+        public void Clear()
+        {
+            foreach (var entity in _entities.Values.ToArray())
+            {
+                PoolEntity(entity);
+            }
         }
     }
 }

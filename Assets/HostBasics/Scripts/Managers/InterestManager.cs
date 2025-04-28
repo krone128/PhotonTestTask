@@ -12,25 +12,24 @@ namespace HostBasics.Scripts
         List<IEntity> _entitiesList = new ();
         
         Dictionary<PlayerRef, Transform> _playerMap = new ();
+        Dictionary<PlayerRef, List<IEntity>> _interestResults = new();
+        Dictionary<PlayerRef, HashSet<Vector2Int>> _playerToDirtyChunkMap = new();
+        Dictionary<PlayerRef, Vector2Int> _playerToChunkMap = new();
         
-        Dictionary<PlayerRef, List<IEntity>> _precache = new();
-        
-        Dictionary<int, Vector2Int> _entityToChunkMapping = new();
-        
-        Dictionary<PlayerRef, Vector2Int> _playerToChunkMapping = new();
+        Dictionary<int, Vector2Int> _entityToChunkMap = new();
 
         public void RegisterPlayer(PlayerRef player, Transform playerTransform)
         {
             _playerMap.Add(player, playerTransform);
-            _playerToDirtyChunkMapping[player] = new HashSet<Vector2Int>();
-            _precache[player] = new List<IEntity>();
+            _playerToDirtyChunkMap[player] = new HashSet<Vector2Int>();
+            _interestResults[player] = new List<IEntity>();
         }
 
         public void UnregisterPlayer(PlayerRef player)
         {
             _playerMap.Remove(player);
-            _playerToDirtyChunkMapping.Remove(player);
-            _precache.Remove(player);
+            _playerToDirtyChunkMap.Remove(player);
+            _interestResults.Remove(player);
         }
         
         public void RegisterEntity(IEntity entity)
@@ -43,17 +42,14 @@ namespace HostBasics.Scripts
             _entitiesList.Remove(entity);
         }
         
-        
-        Dictionary<PlayerRef, HashSet<Vector2Int>> _playerToDirtyChunkMapping = new();
-        
         private void UpdatePlayerChunks()
         {
             foreach (var playerKvp in _playerMap)
             {
                 var playerChunk = GetChunk(playerKvp.Value.position);
-                _playerToDirtyChunkMapping[playerKvp.Key].Clear();
+                _playerToDirtyChunkMap[playerKvp.Key].Clear();
                 
-                if (_playerToChunkMapping.TryGetValue(playerKvp.Key, out var mappedChunk))
+                if (_playerToChunkMap.TryGetValue(playerKvp.Key, out var mappedChunk))
                 {
                     if (mappedChunk == playerChunk)
                     {
@@ -74,7 +70,7 @@ namespace HostBasics.Scripts
                         {
                             var chunkToAdd = new Vector2Int(playerChunk.x + chunkDelta.x, i);
                         
-                            _playerToDirtyChunkMapping[playerKvp.Key].Add(chunkToAdd);
+                            _playerToDirtyChunkMap[playerKvp.Key].Add(chunkToAdd);
                         }
                     }
                     
@@ -88,7 +84,7 @@ namespace HostBasics.Scripts
                         {
                             var chunkToAdd = new Vector2Int(i, playerChunk.y + chunkDelta.y);
                         
-                            _playerToDirtyChunkMapping[playerKvp.Key].Add(chunkToAdd);
+                            _playerToDirtyChunkMap[playerKvp.Key].Add(chunkToAdd);
                         }
                     }
 
@@ -105,12 +101,12 @@ namespace HostBasics.Scripts
                              j <= Mathf.Min(GameConfig.GridChunks.y, playerChunk.y + GameConfig.InterestRadius); 
                              j++)
                         {
-                            _playerToDirtyChunkMapping[playerKvp.Key].Add(new Vector2Int(i, j));
+                            _playerToDirtyChunkMap[playerKvp.Key].Add(new Vector2Int(i, j));
                         }
                     }
                 }
 
-                _playerToChunkMapping[playerKvp.Key] = playerChunk;
+                _playerToChunkMap[playerKvp.Key] = playerChunk;
             }
         }
 
@@ -120,13 +116,13 @@ namespace HostBasics.Scripts
             {
                 var chunk = GetChunk(entity.Position);
 
-                if (_entityToChunkMapping.TryGetValue(entity.Id, out var mappedChunk))
+                if (_entityToChunkMap.TryGetValue(entity.Id, out var mappedChunk))
                 {
                     if (mappedChunk == chunk) continue;
                 }
                 else
                 {
-                    _entityToChunkMapping[entity.Id] = chunk;
+                    _entityToChunkMap[entity.Id] = chunk;
                 }
                 entity.SetChunkDirty();
                 //_entityToChunkMapping[entity.Id] = chunk;
@@ -138,22 +134,22 @@ namespace HostBasics.Scripts
             UpdatePlayerChunks();
             CheckEntityChangedChunks();
             
-            foreach (var precacheValue in _precache.Values)
+            foreach (var precacheValue in _interestResults.Values)
             {
                 precacheValue.Clear();
             }
             
             foreach (var e in _entitiesList)
             {
-                var lastEntityChunk = _entityToChunkMapping[e.Id];
+                var lastEntityChunk = _entityToChunkMap[e.Id];
                 var entityChunk = GetChunk(e.Position);
-                _entityToChunkMapping[e.Id] = entityChunk;
+                _entityToChunkMap[e.Id] = entityChunk;
                 
                 foreach (var p in _playerMap)
                 {
-                    var playerChunk = _playerToChunkMapping[p.Key];
-                    var pcList = _precache[p.Key];
-                    var dirtyChunksMap = _playerToDirtyChunkMapping[p.Key];
+                    var playerChunk = _playerToChunkMap[p.Key];
+                    var pcList = _interestResults[p.Key];
+                    var dirtyChunksMap = _playerToDirtyChunkMap[p.Key];
                     var entityInRadius = IsInRadiusChunks(entityChunk, playerChunk, GameConfig.InterestRadius);
                     var lastEntityInRadius = IsInRadiusChunks(lastEntityChunk, playerChunk, GameConfig.InterestRadius);
                     
@@ -170,7 +166,7 @@ namespace HostBasics.Scripts
                 e.ResetChunkDirty();
             }
 
-            return _precache;
+            return _interestResults;
         }
         
         public static Vector2Int GetChunk(Vector3 position)

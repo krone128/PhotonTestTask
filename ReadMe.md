@@ -1,5 +1,8 @@
 # Photon Test task
 
+Youtube video link:
+https://www.youtube.com/watch?v=8JKoGArF6iw
+
 This project implements abstract game server with following requirements:
 
 1. Host - Client approach using Photon Fusion

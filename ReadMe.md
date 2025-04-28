@@ -28,7 +28,10 @@ The project was developed using Unity 6 on MacOS
 2. Open File - Build Settings, select your standalone platform
 3. Tap Build and Run button, the app will open after build
 
-To launch multiple instances of an app
+To launch multiple instances of an app on MacOS, open Terminal and run command
+```jsx
+	open -n /path/to/buld/Mac.app
+```
 
 ## How to test
 

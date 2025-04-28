@@ -29,7 +29,8 @@ To launch multiple instances of an app
 
 ## How to test
 
-Though we could go with snapshots, the quickest way to test the project would be to open multiple instances of an app in fullscreen, one of them being a server and toggle between them and see if the difference in picture is noticeable/considerable.
+The best way to test such a loaded system would be to either use data snapshots from update ticks, or set up a multipeer mode to make a visual test. 
+However, the quickest way to test is to start multiple instances of an app in fullscreen, one of them being a server, toggle between them and see if the difference in picture is noticeable/considerable.
 
 ## Implementation details
 

@@ -1,3 +1,5 @@
+using System;
+using TMPro;
 using UnityEngine;
 
 namespace HostBasics.Scripts.Entities
@@ -8,19 +10,21 @@ namespace HostBasics.Scripts.Entities
         public bool IsDirty { get; }
         public bool IsChunkDirty { get; }
         
-        public Vector3 Position { get; set;}
+        public Vector3 Position { get; set; }
         public Vector3 Destination { get; set; }
-        
-        public int LastUpdateTick { get; set; }
+        int LastUpdateTick { get; set; }
+        bool IsMoving { get; }
 
-        void Init();
-        void Init(short id);
-        void StartMovement();
-        
         void SetDirty();
         void ResetDirty();
         
         void SetChunkDirty();
         void ResetChunkDirty();
+        
+        void Init();
+        void Init(short id);
+        void StartMovement();
+        void SetActive(bool isActive);
+        void SelectNewDestination();
     }
 }

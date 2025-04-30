@@ -1,45 +1,32 @@
-
-using System;
+using TMPro;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace HostBasics.Scripts.Entities
 {
     public partial class Entity : MonoBehaviour
     {
+        private static short ENTITY_ID_POOL = 0;
+        public static bool NetworkUpdateEnabled = true;
+        
+        public float Speed = 10f;
+        
         public MeshRenderer meshRenderer;
         
         public Material RedMaterial;
         public Material GreenMaterial;
 
+        private short _id;
         private bool _isMoving;
-        
-        public bool IsMoving
-        {
-            get => _isMoving;
-            private set
-            {
-                _isMoving = value;
-                meshRenderer.material = value ? GreenMaterial : RedMaterial;
-            }
-        }
 
         Vector3 TargetDirection { get; set; }
 
-        public void StartMovement()
+        private void Update()
         {
-            TargetDirection = Destination - transform.position;
-            TargetDirection = TargetDirection.normalized;
-            transform.LookAt(Destination);
-            IsMoving = true;
+            if(NetworkUpdateEnabled)
+                UpdateMovement();
         }
 
-        public void Update()
-        {
-            UpdateMovement();
-        }
-
-        public void UpdateMovement()
+        private void UpdateMovement()
         {
             if (!IsMoving) return;
         
@@ -56,19 +43,12 @@ namespace HostBasics.Scripts.Entities
             
             SelectNewDestination();
         }
-    
-        public void SelectNewDestination()
+        
+        
+        private void OnMouseUpAsButton()
         {
-            if(!Authoritative) return;
-
-            var destination =
-                new Vector3(Random.Range(0, GameConfig.GridSize.x),
-                    0f,
-                    Random.Range(0, GameConfig.GridSize.y));
-            
-            Destination = destination;
-            StartMovement();
-            IsDirty = true;
+            GameObject.Find("EntityDebugText").GetComponent<TMP_Text>().text = $"Entity {_id}";
+            OnClick?.Invoke(_id);
         }
 
         private void OnDrawGizmos()

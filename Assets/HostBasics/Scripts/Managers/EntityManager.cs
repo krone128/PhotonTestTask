@@ -15,9 +15,9 @@ namespace HostBasics.Scripts
         [SerializeField] Transform _entityParent;
         [SerializeField] private Entity _entityPrefab;
 
-        private IObjectPool<Entity> _creaturePool;
+        private IObjectPool<IEntity> _creaturePool;
         
-        private Dictionary<int, Entity> _entities  = new();
+        private Dictionary<short, IEntity> _entities  = new();
         private NetworkRunner _runner;
 
         public IEnumerable<IEntity> Entities => _entities.Values;
@@ -25,17 +25,17 @@ namespace HostBasics.Scripts
         public void Init(NetworkRunner runner)
         {
             _runner = runner;
-            _creaturePool = new ObjectPool<Entity>(() => Instantiate(_entityPrefab, _entityParent), ActionOnGet, ActionOnRelease);
+            _creaturePool = new ObjectPool<IEntity>(() => Instantiate(_entityPrefab, _entityParent), ActionOnGet, ActionOnRelease);
         }
 
-        private void ActionOnGet(Entity obj)
+        private void ActionOnGet(IEntity obj)
         {
-            obj.gameObject.SetActive(true);
+            obj.SetActive(true);
         }
         
-        private void ActionOnRelease(Entity obj)
+        private void ActionOnRelease(IEntity obj)
         {
-            obj.gameObject.SetActive(false);
+            obj.SetActive(false);
         }
 
         public void SpawnRandomBatched(int count, Vector2 positionRange)
@@ -97,21 +97,21 @@ namespace HostBasics.Scripts
             
             foreach (var e in entities)
             {
-                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius) || (_runner.Tick.Raw - e.LastUpdateTick < 5)) continue;
+                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius) || e.IsMoving) continue;
 
                 PoolEntity(e);
             }
         }
         
-        private void PoolEntity(Entity entityView)
+        private void PoolEntity(IEntity entityView)
         {
-            entityView.gameObject.SetActive(false);
+            entityView.SetActive(false);
             _entities.Remove(entityView.Id);
             _creaturePool.Release(entityView);
         }
 
         // Creates Fully inited object
-        public Entity SpawnEntity()
+        private IEntity SpawnEntity()
         {
             var entity = _creaturePool.Get();
             return entity;
@@ -122,7 +122,13 @@ namespace HostBasics.Scripts
             foreach (var entity in _entities.Values.ToArray())
             {
                 PoolEntity(entity);
+                _entities.Clear();
             }
+        }
+
+        public IEntity GetEntity(short id)
+        {
+            return _entities.GetValueOrDefault(id);
         }
     }
 }

@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using ExitGames.Client.Photon;
 using Fusion;
 using Fusion.Sockets;
 using HostBasics.Scripts.Entities;
 using TMPro;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace HostBasics.Scripts
 {
@@ -18,7 +20,7 @@ namespace HostBasics.Scripts
         
         [SerializeField] private EntityManager _entityManager;
         private InterestManager _interestManager;
-
+        
         public Transform playerTransform;
         
         private NetworkRunner _networkRunner;
@@ -26,10 +28,12 @@ namespace HostBasics.Scripts
         private void Awake()
         {
             SpawnDebugTiles();
+            NetworkUpdateProxy.OnEntityPause += OnEntityPause;
         }
 
-        public void Init(NetworkRunner runner)
+        public void Init(NetworkRunner runner, BasicSpawner basicSpawner)
         {
+            _basicSpawner = basicSpawner;
             _networkRunner = runner;
             _entityManager.Init(runner);
             _networkRunner.AddCallbacks(this);
@@ -43,6 +47,23 @@ namespace HostBasics.Scripts
             NetworkUpdateProxy.OnFixedUpdateNetwork += OnFixedUpdateNetwork;
         }
 
+        private void OnEntityPause(short id)
+        {
+            if (_networkRunner.IsServer)
+            {
+                var entity = _entityManager.GetEntity(id);
+                _basicSpawner.TeleportAll(entity.Position);
+                SendEntityUpdateToClients();
+            }
+            
+            PrintDebugEntityId(id);
+        }
+        
+        public void PrintDebugEntityId(short id)
+        {
+            GameObject.Find("EntityDebugText").GetComponent<TMP_Text>().text = $"Entity {id}";
+        }
+
         private void SetupInterestManagement()
         {
             _interestManager = new InterestManager();
@@ -54,39 +75,11 @@ namespace HostBasics.Scripts
         }
         
         StringBuilder sb = new StringBuilder();
+        StringBuilder uiSb = new StringBuilder();
+        
         public ReliableKey EntityUpdateEvent = ReliableKey.FromInts(0,0,0,777);
-        
-        Dictionary<PlayerRef, BatchContainer> batchedMessages = new ();
-        
-        private class BatchContainer
-        {
-            private const int BatchOverSize = 20;
-            private const int MaxDelayFrames = 3;
-            private int _delayFrameCounter;
-            
-            public Dictionary<short, EntityUpdateMessage> batchedMessages = new();
+        public ReliableKey PlayerChunkUpdateEvent = ReliableKey.FromInts(0,0,0,778);
 
-            public void IncrementDelayFrameCounter() => _delayFrameCounter++;
-            
-            public void AddBatchedMessage(IEnumerable<EntityUpdateMessage> batchedMessage)
-            {
-                foreach (var entityUpdateMessage in batchedMessage)
-                {
-                    batchedMessages[entityUpdateMessage.Id] = entityUpdateMessage;
-                }
-
-                _delayFrameCounter++;
-            }
-
-            public void ClearBatchedMessages()
-            {
-                batchedMessages.Clear();
-                _delayFrameCounter = 0;
-            }
-            
-            public bool IsDue => _delayFrameCounter >= MaxDelayFrames || batchedMessages.Count >= BatchOverSize;
-        }
-        
         public void SendEntityUpdateToClients()
         {
             var mappedEntities = _interestManager.GetUpdatedEntities();
@@ -97,50 +90,54 @@ namespace HostBasics.Scripts
             }
 
             sb.Clear();
-        
+            uiSb.Clear();
+
             foreach (var playerRef in _networkRunner.ActivePlayers)
             {
-                if(playerRef.PlayerId <= 1) continue;
-
-                var batch = batchedMessages[playerRef];
+                if (playerRef.PlayerId <= 1) continue;
 
                 if (mappedEntities.TryGetValue(playerRef, out var mapping) && mapping.Any())
                 {
                     var filteredMapping = mapping
-                        .Select(e => new EntityUpdateMessage(e.Id, e.Position, e.Destination)).ToArray();
-                    batch.AddBatchedMessage(filteredMapping);
-                }
-            
-                batch.IncrementDelayFrameCounter();
-                
-                if(!batch.IsDue) continue;
+                        .Select(e => new EntityUpdateMessage(e.Id, e.Position, e.Destination)).ToList();
+                    
+                    filteredMapping.Insert(0, new EntityUpdateMessage
+                    {
+                        Id = -1,
+                        Position = _interestManager.GetPlayerPosition(playerRef),
+                        Destination = default
+                    });
 
-                if (batch.batchedMessages.Count == 0)
+                    var bytes = MemoryMarshal.Cast<EntityUpdateMessage, byte>(filteredMapping.ToArray());
+
+                    sb.Append(
+                        $"Sending batched to player [{playerRef.PlayerId}]:\n{filteredMapping.Count} entities, {bytes.Length} bytes");
+
+                    var stats = TotalMsgBytesSent[playerRef];
+                    stats.Item1++;
+                    stats.Item2 += bytes.Length;
+
+                    uiSb.AppendLine(
+                        $"Clint [{playerRef.PlayerId}]:\n{TotalMsgBytesSent[playerRef].Item1} messages\n{TotalMsgBytesSent[playerRef].Item2} bytes");
+
+                    TotalMsgBytesSent[playerRef] = stats;
+                    _networkRunner.SendReliableDataToPlayer(playerRef, EntityUpdateEvent, bytes.ToArray());
+                }
+
+                if (sb.Length > 0)
                 {
-                    batch.ClearBatchedMessages();
-                    continue;
+                    Debug.Log(sb.ToString());
+                }
+                else
+                {
+                    Debug.Log("No network updates sent at this frame");
                 }
 
-                var bytes = MemoryMarshal.Cast<EntityUpdateMessage, byte>(batch.batchedMessages.Values.ToArray());
-                
-                sb.Append($"Sending batched to player [{playerRef.PlayerId}]:\n{batch.batchedMessages.Count} entities, {bytes.Length} bytes");
-                batch.ClearBatchedMessages();
-                
-                var stats = TotalMsgBytesSent[playerRef];
-                stats.Item1++;
-                stats.Item2+=bytes.Length;
-                
-                TotalMsgBytesSent[playerRef] = stats;
-                _networkRunner.SendReliableDataToPlayer(playerRef, EntityUpdateEvent, bytes.ToArray());
-            }
-
-            if (sb.Length > 0)
-            {
-                Debug.Log(sb.ToString());
-            }
-            else
-            {
-                Debug.Log("No network updates sent at this frame");
+                if (uiSb.Length > 0)
+                {
+                    GameObject.Find("PlayerNetworkDataText").GetComponent<TMP_Text>().text =
+                        uiSb.ToString();
+                }
             }
         }
 
@@ -151,24 +148,29 @@ namespace HostBasics.Scripts
             TotalMsgBytesReceived.Item1++;
             TotalMsgBytesReceived.Item2+=data.Count;
             
+            
+            GameObject.Find("PlayerNetworkDataText").GetComponent<TMP_Text>().text =
+                $"Client [{_networkRunner.LocalPlayer.PlayerId}] received:\n{TotalMsgBytesReceived.Item1} messages\n{TotalMsgBytesReceived.Item2} bytes\n";
+            
             var span = MemoryMarshal.Cast<byte, EntityUpdateMessage>(data);
 
             if (playerTransform)
             {
-                _entityManager.UpdateNotInterested(playerTransform.position);
+                _entityManager.UpdateNotInterested(span[0].Position);
             }
-            Debug.Log($"Received update message:\n{span.Length} entities, {data.Count} bytes");
             
-            foreach (var e in span)
+            Debug.Log($"Received update message:\n{span.Length} entities, {data.Count} bytes");
+
+            foreach (var e in span.ToArray().Skip(1))
             {
                 _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);
             }
-
         }
         
         GameObject[,] TileIndicators = new GameObject[GameConfig.GridChunks.x, GameConfig.GridChunks.y];
 
         public GameObject _debugTile;
+        private BasicSpawner _basicSpawner;
 
         private void OnFixedUpdateNetwork()
         {
@@ -179,19 +181,16 @@ namespace HostBasics.Scripts
         {
             TotalMsgBytesSent.Add(player, (0,0));
             _interestManager.RegisterPlayer(player, transform1);
-            batchedMessages.Add(player, new BatchContainer());
         }
 
         public void PlayerLeft(PlayerRef player)
         {
             TotalMsgBytesSent.Remove(player);
             _interestManager.UnregisterPlayer(player);
-            batchedMessages.Remove(player);
         }
 
         #region Debug
-
-
+        
         private void SpawnDebugTiles()
         {
             var halfChunkSize = GameConfig.ChunkSize / 2f;
@@ -233,7 +232,8 @@ namespace HostBasics.Scripts
         
         public void OnReliableDataReceived(NetworkRunner runner, PlayerRef player, ReliableKey key, ArraySegment<byte> data)
         {
-            if(key.Equals(EntityUpdateEvent)) ProcessReliableData(data);
+            if(key.Equals(EntityUpdateEvent)) 
+                ProcessReliableData(data);
         }
 
 
@@ -254,18 +254,19 @@ namespace HostBasics.Scripts
 
         public void OnPlayerLeft(NetworkRunner runner, PlayerRef player)
         {
-            
+   
         }
 
         public void OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
         {
             _entityManager.Clear();
             NetworkUpdateProxy.OnFixedUpdateNetwork -= OnFixedUpdateNetwork;
+            NetworkUpdateProxy.OnEntityPause -= OnEntityPause;
         }
 
         public void OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason)
         {
-            
+
         }
 
         public void OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token)

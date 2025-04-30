@@ -187,5 +187,10 @@ namespace HostBasics.Scripts
                     
             return Mathf.Abs(chunkDelta.x) <= blockRadius && Mathf.Abs(chunkDelta.y) <= blockRadius;
         }
+
+        public Vector2Half GetPlayerPosition(PlayerRef playerRef)
+        {
+            return _playerMap[playerRef].position;
+        }
     }
 }

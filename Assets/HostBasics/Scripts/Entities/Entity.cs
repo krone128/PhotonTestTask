@@ -1,16 +1,13 @@
-using TMPro;
+using System;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace HostBasics.Scripts.Entities
 {
     public partial class Entity : IEntity
     {
-        private static short ENTITY_ID_POOL = 0;
-        
-        public float Speed = 10f;
-        
-        private short _id;
-        
+        public static event Action<short> OnClick;
+
         public short Id
         {
             get => _id;
@@ -32,6 +29,16 @@ namespace HostBasics.Scripts.Entities
         }
         public Vector3 Destination { get; set; }
         public int LastUpdateTick { get; set; }
+        
+        public bool IsMoving
+        {
+            get => _isMoving;
+            private set
+            {
+                _isMoving = value;
+                meshRenderer.material = value ? GreenMaterial : RedMaterial;
+            }
+        }
 
         public void Init()
         {
@@ -46,16 +53,37 @@ namespace HostBasics.Scripts.Entities
             Authoritative = false;
             SetDirty();
         }
+                
+        public void SetActive(bool isActive) => gameObject.SetActive(isActive);
+    
+        public void SelectNewDestination()
+        {
+            if(!Authoritative) return;
+
+            var destination =
+                new Vector3(Random.Range(0, GameConfig.GridSize.x),
+                    0f,
+                    Random.Range(0, GameConfig.GridSize.y));
+            
+            Destination = destination;
+            StartMovement();
+            IsDirty = true;
+        }
         
+        public void StartMovement()
+        {
+            TargetDirection = Destination - transform.position;
+            TargetDirection = TargetDirection.normalized;
+            transform.LookAt(Destination);
+            IsMoving = true;
+        }
+
         public void SetDirty() => IsDirty = true;
         public void ResetDirty() => IsDirty = false;
         
         public void SetChunkDirty() => IsChunkDirty = true;
         public void ResetChunkDirty() => IsChunkDirty = false;
 
-        private void OnMouseUpAsButton()
-        {
-            GameObject.Find("DebugText").GetComponent<TMP_Text>().text = $"Entity {_id}";
-        }
+
     }
 }

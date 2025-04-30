@@ -64,7 +64,7 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
             sceneInfo.AddSceneRef(scene, LoadSceneMode.Additive);
         }
         
-        gameManager.Init(_runner);
+        gameManager.Init(_runner, this);
         
         // Start or join (depends on gamemode) a session with a specific name
         await _runner.StartGame(new StartGameArgs()
@@ -213,5 +213,13 @@ public class BasicSpawner : MonoBehaviour, INetworkRunnerCallbacks
 
     public void OnObjectEnterAOI(NetworkRunner runner, NetworkObject obj, PlayerRef player)
     {
+    }
+
+    public void TeleportAll(Vector3 position)
+    {
+        foreach (var keyValuePair in _spawnedCharacters)
+        {
+            keyValuePair.Value.GetComponent<NetworkCharacterController>().Teleport(position);
+        }
     }
 }

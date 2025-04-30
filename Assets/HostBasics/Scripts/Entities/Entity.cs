@@ -70,12 +70,17 @@ namespace HostBasics.Scripts.Entities
             IsDirty = true;
         }
         
-        public void StartMovement()
+        public void StartMovement(bool compensate = false)
         {
             TargetDirection = Destination - transform.position;
             TargetDirection = TargetDirection.normalized;
             transform.LookAt(Destination);
             IsMoving = true;
+
+            if (compensate)
+            {
+                transform.position += TargetDirection * (Speed * 0.1f);
+            }
         }
 
         public void SetDirty() => IsDirty = true;

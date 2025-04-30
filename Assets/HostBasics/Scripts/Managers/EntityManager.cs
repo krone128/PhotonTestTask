@@ -86,7 +86,7 @@ namespace HostBasics.Scripts
             
             entity.Position = position;
             entity.Destination = destination;
-            entity.StartMovement();
+            entity.StartMovement(true);
         }
         // Handle entities moving out of interest zone on client
         public void UpdateNotInterested(Vector3 position)
@@ -97,7 +97,7 @@ namespace HostBasics.Scripts
             
             foreach (var e in entities)
             {
-                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius) || e.IsMoving) continue;
+                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius)) continue;
 
                 PoolEntity(e);
             }
@@ -129,6 +129,14 @@ namespace HostBasics.Scripts
         public IEntity GetEntity(short id)
         {
             return _entities.GetValueOrDefault(id);
+        }
+
+        public void UpdateEntityMovement(float networkRunnerDeltaTime)
+        {
+            foreach (var entity in _entities.Values.ToArray())
+            {
+                entity.UpdateMovement(networkRunnerDeltaTime);
+            }
         }
     }
 }

@@ -22,17 +22,17 @@ namespace HostBasics.Scripts.Entities
 
         private void Update()
         {
-            if(NetworkUpdateEnabled)
-                UpdateMovement();
+            if(!Authoritative) UpdateMovement(Time.deltaTime);
         }
 
-        private void UpdateMovement()
+        public void UpdateMovement(float deltaTime)
         {
+            if(!NetworkUpdateEnabled) return;
             if (!IsMoving) return;
         
-            var posDelta = TargetDirection * (Speed * Time.deltaTime);
+            var posDelta = TargetDirection * (Speed * deltaTime);
             
-            if (Vector3.Magnitude(Destination - transform.position) > posDelta.magnitude)
+            if (Vector3.SqrMagnitude(Destination - transform.position) > posDelta.sqrMagnitude)
             {
                 transform.position += posDelta;
                 return;
@@ -43,7 +43,6 @@ namespace HostBasics.Scripts.Entities
             
             SelectNewDestination();
         }
-        
         
         private void OnMouseUpAsButton()
         {

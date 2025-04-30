@@ -23,8 +23,9 @@ namespace HostBasics.Scripts.Entities
         
         void Init();
         void Init(short id);
-        void StartMovement();
+        void StartMovement(bool compensate = false);
         void SetActive(bool isActive);
         void SelectNewDestination();
+        void UpdateMovement(float networkRunnerDeltaTime);
     }
 }

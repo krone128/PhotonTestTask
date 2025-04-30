@@ -82,6 +82,8 @@ namespace HostBasics.Scripts
 
         public void SendEntityUpdateToClients()
         {
+            _entityManager.UpdateEntityMovement(_networkRunner.DeltaTime);
+            
             var mappedEntities = _interestManager.GetUpdatedEntities();
 
             if (mappedEntities.Count == 0)
@@ -123,16 +125,16 @@ namespace HostBasics.Scripts
                     TotalMsgBytesSent[playerRef] = stats;
                     _networkRunner.SendReliableDataToPlayer(playerRef, EntityUpdateEvent, bytes.ToArray());
                 }
-
-                if (sb.Length > 0)
-                {
-                    Debug.Log(sb.ToString());
-                }
-                else
-                {
-                    Debug.Log("No network updates sent at this frame");
-                }
-
+                //
+                // if (sb.Length > 0)
+                // {
+                //     Debug.Log(sb.ToString());
+                // }
+                // else
+                // {
+                //     Debug.Log("No network updates sent at this frame");
+                // }
+                
                 if (uiSb.Length > 0)
                 {
                     GameObject.Find("PlayerNetworkDataText").GetComponent<TMP_Text>().text =
@@ -153,14 +155,11 @@ namespace HostBasics.Scripts
                 $"Client [{_networkRunner.LocalPlayer.PlayerId}] received:\n{TotalMsgBytesReceived.Item1} messages\n{TotalMsgBytesReceived.Item2} bytes\n";
             
             var span = MemoryMarshal.Cast<byte, EntityUpdateMessage>(data);
-
-            if (playerTransform)
-            {
-                _entityManager.UpdateNotInterested(span[0].Position);
-            }
             
-            Debug.Log($"Received update message:\n{span.Length} entities, {data.Count} bytes");
-
+            //Debug.Log($"Received update message:\n{span.Length} entities, {data.Count} bytes");
+                      
+            _entityManager.UpdateNotInterested(span[0].Position);
+            
             foreach (var e in span.ToArray().Skip(1))
             {
                 _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);

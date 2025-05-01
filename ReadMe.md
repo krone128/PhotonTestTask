@@ -38,6 +38,8 @@ To launch multiple instances of an app on MacOS, open Terminal and run command
 The best way to test such a loaded system would be to either use data snapshots from update ticks, or set up a multipeer mode to make a visual test. 
 However, the quickest way to test is to start multiple instances of an app in fullscreen, one of them being a server, toggle between them and see if the difference in picture is noticeable/considerable.
 
+Use P key on keyboard to pause/unpause simulation and compare visual output
+
 ## Implementation details
 
 ### Project

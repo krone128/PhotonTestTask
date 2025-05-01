@@ -156,14 +156,14 @@ namespace HostBasics.Scripts
             
             var span = MemoryMarshal.Cast<byte, EntityUpdateMessage>(data);
             
-            //Debug.Log($"Received update message:\n{span.Length} entities, {data.Count} bytes");
-                      
-            _entityManager.UpdateNotInterested(span[0].Position);
-            
+            // First update all entity positions (skip player position at index 0)
             foreach (var e in span.ToArray().Skip(1))
             {
                 _entityManager.UpdateEntityClient(e.Id, e.Position, e.Destination);
             }
+
+            // Then remove entities outside interest zone
+            _entityManager.UpdateNotInterested(span[0].Position);
         }
         
         GameObject[,] TileIndicators = new GameObject[GameConfig.GridChunks.x, GameConfig.GridChunks.y];

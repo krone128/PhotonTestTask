@@ -82,11 +82,9 @@ namespace HostBasics.Scripts
                 _entities.Add(id, entity);
             }
             
-            entity.LastUpdateTick = _runner.Tick.Raw;
-            
             entity.Position = position;
             entity.Destination = destination;
-            entity.StartMovement(true);
+            entity.StartMovement(_runner.Tick.Raw);
         }
         // Handle entities moving out of interest zone on client
         public void UpdateNotInterested(Vector3 position)
@@ -97,7 +95,7 @@ namespace HostBasics.Scripts
             
             foreach (var e in entities)
             {
-                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius)) continue;
+                if(InterestManager.IsInRadiusChunks(e.Position, chunk, GameConfig.InterestRadius) || (_runner.Tick.Raw - e.LastUpdateTick) < GameConfig.EntityPoolTimeout) continue;
 
                 PoolEntity(e);
             }

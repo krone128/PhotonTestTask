@@ -1,4 +1,5 @@
 using System;
+using Fusion;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -70,16 +71,22 @@ namespace HostBasics.Scripts.Entities
             IsDirty = true;
         }
         
-        public void StartMovement(bool compensate = false)
+        public void StartMovement(int updateTick = 0)
         {
             TargetDirection = Destination - transform.position;
             TargetDirection = TargetDirection.normalized;
             transform.LookAt(Destination);
             IsMoving = true;
 
-            if (compensate)
+            
+            
+            if (updateTick > 0)
             {
-                transform.position += TargetDirection * (Speed * 0.1f);
+                float clientDelta =
+                    (float)TickRate.Resolve(NetworkProjectConfig.Global.Simulation.TickRateSelection).ClientTickDelta;
+                var deltaTick = Mathf.Clamp(updateTick - LastUpdateTick - 1, 1, 8);
+                LastUpdateTick = updateTick;
+                transform.position += TargetDirection * (Speed * deltaTick * clientDelta);
             }
         }
 
